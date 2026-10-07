@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>请假申请 · 脆皮大学生</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    overflow: hidden;
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    color: #4a3f52;
+    background: radial-gradient(circle at 50% 25%, #fff7f0 0%, #ffeef5 35%, #e9f0fb 75%, #dbe4f3 100%);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  h1 {
+    margin: 0 0 2px;
+    font-size: clamp(17px, 2.6vw, 26px);
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-align: center;
+    color: #4a3f52;
+    text-shadow: 0 2px 0 #fff;
+    padding: 0 14px;
+  }
+
+  #face {
+    display: block;
+    width: min(360px, 44vh, 78vw);
+    height: auto;
+  }
+
+  .btn-area {
+    position: relative;
+    width: min(440px, 92vw);
+    height: 56px;
+    margin-top: 2px;
+  }
+
+  .btn {
+    position: absolute;
+    top: 0;
+    min-width: 118px;
+    height: 52px;
+    padding: 0 22px;
+    border-radius: 26px;
+    border: 2.5px solid #4a3f52;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    cursor: pointer;
+    color: #4a3f52;
+    box-shadow: 0 4px 0 #4a3f52;
+    transition: transform .15s ease, box-shadow .15s ease, opacity .2s ease;
+  }
+  .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #4a3f52; }
+
+  .yes { left: calc(50% - 140px); background: linear-gradient(#d3f7d9, #a9e8b8); }
+  .no  { left: calc(50% + 22px);  background: linear-gradient(#ffe0e6, #ffb8c6); }
+  .yes:hover { background: linear-gradient(#e0fbe4, #b8f0c6); }
+  .no:hover  { background: linear-gradient(#ffecef, #ffc6d2); }
+
+  #rip {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(.7);
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    color: #6b5b6e;
+    opacity: 0;
+    transition: opacity .8s ease .4s, transform .8s ease .4s;
+    pointer-events: none;
+    white-space: nowrap;
+    text-shadow: 0 2px 0 #fff;
+  }
+  #rip.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+  /* ==================== 告别覆盖层 ==================== */
+  #farewell {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 247, 240, 0.88);
+    -webkit-backdrop-filter: blur(9px);
+    backdrop-filter: blur(9px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .55s ease;
+  }
+  #farewell.show { opacity: 1; pointer-events: auto; }
+
+  #farewell .card {
+    text-align: center;
+    padding: 32px 38px 30px;
+    background: #fff;
+    border: 3px solid #4a3f52;
+    border-radius: 28px;
+    box-shadow: 0 10px 0 #4a3f52, 0 24px 44px rgba(120,100,130,.22);
+    transform: scale(.7) translateY(18px);
+    opacity: 0;
+    transition: transform .5s cubic-bezier(.18,1.35,.5,1), opacity .4s ease;
+  }
+  #farewell.show .card { transform: scale(1) translateY(0); opacity: 1; }
+
+  #farewell .emoji { font-size: 48px; line-height: 1; }
+  #farewell h2 {
+    margin: 12px 0 8px;
+    font-size: 24px;
+    letter-spacing: 1.5px;
+  }
+  #farewell p {
+    margin: 0 0 22px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #7d7285;
+    max-width: 240px;
+  }
+  #closeNow {
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    padding: 12px 32px;
+    border-radius: 24px;
+    border: 2.5px solid #4a3f52;
+    background: linear-gradient(#d3f7d9, #a9e8b8);
+    color: #4a3f52;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #4a3f52;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  #closeNow:active { transform: translateY(3px); box-shadow: 0 1px 0 #4a3f52; }
+</style>
+</head>
+<body>
+
+  <h1>脆皮大学生向您发出请假请求</h1>
+  <canvas id="face" width="400" height="400"></canvas>
+
+  <div class="btn-area">
+    <button id="yes" class="btn yes">同 意</button>
+    <button id="no"  class="btn no">不同意</button>
+    <div id="rip">💀 R.I.P. 💀</div>
+  </div>
+
+  <!-- 告别覆盖层 -->
+  <div id="farewell">
+    <div class="card">
+      <div class="emoji">✅</div>
+      <h2>请假已批准</h2>
+      <p id="farewellMsg">小兔子感谢您的同意，页面即将自动关闭…</p>
+      <button id="closeNow">关闭页面</button>
+    </div>
+  </div>
+
+<script>
+(function () {
+  /* ==================== 画布 ==================== */
+  const canvas = document.getElementById('face');
+  const ctx = canvas.getContext('2d');
+  const W = 400, H = 400;
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = W * DPR;
+  canvas.height = H * DPR;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+
+  const yesBtn = document.getElementById('yes');
+  const noBtn  = document.getElementById('no');
+  const ripEl  = document.getElementById('rip');
+
+  const farewellEl  = document.getElementById('farewell');
+  const farewellMsg = document.getElementById('farewellMsg');
+  const closeNowBtn = document.getElementById('closeNow');
+
+  const INK   = '#4a3f52';
+  const PINK  = '#ff9db4';
+  const BLUSH = '#ffb3c6';
+
+  const BASE_Y = H / 2 + 28;
+
+  /* ==================== 状态 ==================== */
+  let isDead       = false;
+  let deathBlend   = 0;
+  let noClickCount = 0;
+  let noScale      = 1;
+  let busy         = false;
+
+  let thanksActive  = false;
+  let thanksTimer   = 0;
+  let thanksFinished = false;
+  const THANKS_DURATION = 3.6;
+  let heartAcc = 0;
+  const particles = [];
+
+  let moodSmooth = 0;
+  let allowClose = false;
+
+  /* ==================== 鼠标追踪 ==================== */
+  const mouse = { x: 0, y: 0 };
+  let mouseMoved = false;
+
+  window.addEventListener('mousemove', e => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+    mouseMoved = true;
+  }, { passive: true });
+
+  window.addEventListener('touchmove', e => {
+    const t = e.touches[0];
+    if (t) { mouse.x = t.clientX; mouse.y = t.clientY; mouseMoved = true; }
+  }, { passive: true });
+
+  /* ==================== 工具 ==================== */
+  const lerp   = (a, b, t) => a + (b - a) * t;
+  const clamp  = (v, a, b) => Math.min(b, Math.max(a, v));
+  const smooth = t => t * t * (3 - 2 * t);
+
+  function btnCenter(el) {
+    const r = el.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }
+
+  function lerpParams(a, b, t) {
+    const out = {};
+    for (const k in a) out[k] = lerp(a[k], b[k], t);
+    return out;
+  }
+
+  /* ==================== 情绪参数 ==================== */
+  const NEUTRAL = {
+    eyeOpen: 1.00, pupilR: 6.4, earAngle: 0.17,
+    mouthCurve: 7, mouthOpen: 0.00, blush: 0.16
+  };
+  const HAPPY = {
+    eyeOpen: 0.00, pupilR: 6.0, earAngle: 0.06,
+    mouthCurve: 15, mouthOpen: 0.00, blush: 0.90
+  };
+  const SCARED = {
+    eyeOpen: 2.60, pupilR: 1.70, earAngle: 1.05,
+    mouthCurve: 0, mouthOpen: 1.00, blush: 0.00
+  };
+  const DEAD = {
+    eyeOpen: 0.00, pupilR: 6.0, earAngle: 2.05,
+    mouthCurve: -5, mouthOpen: 0.00, blush: 0.00
+  };
+
+  const cur = Object.assign({}, NEUTRAL);
+
+  /* ==================== 注视方向 ==================== */
+  const gaze = { x: 0, y: 0 };
+
+  /* ==================== 情绪计算 ==================== */
+  function computeMoodTarget() {
+    if (!mouseMoved) return 0;
+    const yc = btnCenter(yesBtn);
+    const nc = btnCenter(noBtn);
+    const dYes = Math.hypot(mouse.x - yc.x, mouse.y - yc.y);
+    const dNo  = Math.hypot(mouse.x - nc.x, mouse.y - nc.y);
+    const R = 330;
+
+    let h = smooth(clamp(1 - dYes / R, 0, 1));
+    let s = smooth(clamp(1 - dNo  / R, 0, 1));
+
+    if (dYes < 45) h = 1;
+    if (dNo  < 45) s = 1;
+
+    return h - s;
+  }
+
+  /* ==================== 耳朵 ==================== */
+  function drawEar(side, p, t) {
+    const rootX = side * 44;
+    const rootY = -66;
+    const tremble = p.mouthOpen * Math.sin(t * 36) * 0.055;
+    const wiggle  = thanksActive ? Math.sin(t * 15) * 0.08 : 0;
+    const angle = side * (p.earAngle + tremble + wiggle) + Math.sin(t * 2.2) * 0.012;
+
+    ctx.save();
+    ctx.translate(rootX, rootY);
+    ctx.rotate(angle);
+
+    const len = 108, w = 23;
+
+    ctx.beginPath();
+    ctx.ellipse(0, -len / 2, w, len / 2, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 3.4;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.ellipse(0, -len / 2 - 5, w * 0.46, len * 0.35, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,157,180,' + (0.55 + 0.30 * p.blush) + ')';
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  /* ==================== 汗滴 ==================== */
+  function drawSweat(x, y, s, alpha) {
+    if (alpha <= 0.01) return;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.moveTo(x, y - s * 1.8);
+    ctx.bezierCurveTo(x + s * 0.95, y - s * 0.4, x + s * 0.95, y + s * 0.75, x, y + s * 0.85);
+    ctx.bezierCurveTo(x - s * 0.95, y + s * 0.75, x - s * 0.95, y - s * 0.4, x, y - s * 1.8);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(125,195,255,0.88)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(75,150,235,0.95)';
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(x - s * 0.28, y + s * 0.05, s * 0.20, s * 0.30, -0.3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  /* ==================== 眼睛 ==================== */
+  function drawEye(x, y, p, g, deathB) {
+    const alive = 1 - deathB;
+
+    if (alive > 0.01) {
+      ctx.globalAlpha = alive;
+
+      const open = clamp(p.eyeOpen, 0, 3);
+      const rx = 16.5;
+      const upperCtrl = 17.5 + Math.max(0, open - 1) * 18;
+
+      let lowerCtrl;
+      if (open >= 1) {
+        lowerCtrl = 17.5 + (open - 1) * 18;
+      } else {
+        lowerCtrl = lerp(-upperCtrl, upperCtrl, open);
+      }
+
+      function eyePath() {
+        ctx.beginPath();
+        ctx.moveTo(x - rx, y);
+        ctx.quadraticCurveTo(x, y - upperCtrl * 2, x + rx, y);
+        ctx.quadraticCurveTo(x, y + lowerCtrl * 2, x - rx, y);
+        ctx.closePath();
+      }
+
+      eyePath();
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+
+      const pupilAlpha = clamp((open - 0.12) / 0.35, 0, 1);
+      if (pupilAlpha > 0.01) {
+        ctx.save();
+        eyePath();
+        ctx.clip();
+        ctx.globalAlpha = alive * pupilAlpha;
+
+        const px = x + g.x;
+        const py = y + g.y;
+
+        ctx.beginPath();
+        ctx.arc(px, py, p.pupilR, 0, Math.PI * 2);
+        ctx.fillStyle = '#3b3244';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(px - p.pupilR * 0.34, py - p.pupilR * 0.42, p.pupilR * 0.34, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(px + p.pupilR * 0.30, py + p.pupilR * 0.34, p.pupilR * 0.18, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      eyePath();
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 3.2;
+      ctx.stroke();
+
+      ctx.globalAlpha = 1;
+    }
+
+    if (deathB > 0.01) {
+      ctx.globalAlpha = deathB;
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 3.8;
+      ctx.lineCap = 'round';
+      const s = 10.5;
+      ctx.beginPath();
+      ctx.moveTo(x - s, y - s); ctx.lineTo(x + s, y + s);
+      ctx.moveTo(x + s, y - s); ctx.lineTo(x - s, y + s);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  /* ==================== 爱心粒子 ==================== */
+  function spawnHeart() {
+    const baseX = W / 2 + (Math.random() - 0.5) * 190;
+    const baseY = H / 2 + 105 + Math.random() * 55;
+    particles.push({
+      x: baseX,
+      y: baseY,
+      vx: (Math.random() - 0.5) * 55,
+      vy: -65 - Math.random() * 85,
+      life: 0,
+      maxLife: 1.5 + Math.random() * 1.0,
+      size: 8 + Math.random() * 9,
+      rot: (Math.random() - 0.5) * 0.8,
+      rotV: (Math.random() - 0.5) * 2.4,
+      color: Math.random() < 0.4 ? '#ff7f9c'
+           : (Math.random() < 0.7 ? '#ffa6bd' : '#ffc2d3')
+    });
+  }
+
+  function drawHeartShape(x, y, size, rot, alpha, color) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    ctx.fillStyle = color;
+    const s = size;
+    ctx.beginPath();
+    ctx.moveTo(0, -s * 0.6);
+    ctx.bezierCurveTo( s * 0.7, -s * 1.1,  s * 1.1, -s * 0.1, 0, s * 0.85);
+    ctx.bezierCurveTo(-s * 1.1, -s * 0.1, -s * 0.7, -s * 1.1, 0, -s * 0.6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  /* ==================== 对话气泡 ==================== */
+  function drawBubble(tt) {
+    const popIn  = clamp(tt / 0.32, 0, 1);
+    const popOut = tt > THANKS_DURATION - 0.55
+      ? clamp(1 - (tt - (THANKS_DURATION - 0.55)) / 0.55, 0, 1)
+      : 1;
+    const alpha = Math.min(popIn, popOut);
+    if (alpha <= 0.01) return;
+
+    const scl = 0.55 + 0.45 * smooth(popIn);
+
+    const bx = W / 2;
+    const by = 40;
+    const bw = 208;
+    const bh = 58;
+    const r  = 22;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(bx, by);
+    ctx.scale(scl, scl);
+
+    ctx.shadowColor = 'rgba(120,100,130,0.18)';
+    ctx.shadowBlur = 14;
+    ctx.shadowOffsetY = 5;
+
+    ctx.beginPath();
+    ctx.moveTo(-bw / 2 + r, -bh / 2);
+    ctx.lineTo(bw / 2 - r, -bh / 2);
+    ctx.quadraticCurveTo(bw / 2, -bh / 2, bw / 2, -bh / 2 + r);
+    ctx.lineTo(bw / 2, bh / 2 - r);
+    ctx.quadraticCurveTo(bw / 2, bh / 2, bw / 2 - r, bh / 2);
+    ctx.lineTo(22, bh / 2);
+    ctx.lineTo(10, bh / 2 + 17);
+    ctx.lineTo(-4, bh / 2);
+    ctx.lineTo(-bw / 2 + r, bh / 2);
+    ctx.quadraticCurveTo(-bw / 2, bh / 2, -bw / 2, bh / 2 - r);
+    ctx.lineTo(-bw / 2, -bh / 2 + r);
+    ctx.quadraticCurveTo(-bw / 2, -bh / 2, -bw / 2 + r, -bh / 2);
+    ctx.closePath();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+
+    ctx.shadowColor = 'transparent';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.fillStyle = INK;
+    ctx.font = '900 23px "PingFang SC", "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('谢谢老师！', 0, 1);
+
+    ctx.restore();
+  }
+
+  /* ==================== 小兔子 ==================== */
+  function drawRabbit(t, p, deathB, scaredAmt, jumpY, tilt) {
+    const bob = Math.sin(t * 1.6) * 3 * (1 - deathB);
+
+    const shakeX = scaredAmt * (1 - deathB) * Math.sin(t * 42) * 3.6;
+    const shakeY = scaredAmt * (1 - deathB) * Math.cos(t * 39) * 2.6;
+
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.save();
+    ctx.translate(W / 2 + shakeX, BASE_Y + bob + shakeY + jumpY);
+    ctx.rotate(deathB * 0.17 + tilt);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    /* 天使光环 */
+    if (deathB > 0.01) {
+      ctx.save();
+      ctx.globalAlpha = deathB;
+      const haloY = -138;
+      ctx.beginPath();
+      ctx.ellipse(0, haloY, 50, 15, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,225,120,0.55)';
+      ctx.lineWidth = 11;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(0, haloY, 44, 12, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,205,60,0.98)';
+      ctx.lineWidth = 5.5;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    drawEar(-1, p, t);
+    drawEar( 1, p, t);
+
+    /* 脑袋 */
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 106, 96, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 3.6;
+    ctx.stroke();
+
+    /* 腮红 */
+    if (p.blush > 0.01) {
+      ctx.globalAlpha = p.blush;
+      ctx.fillStyle = BLUSH;
+      ctx.beginPath();
+      ctx.ellipse(-73, 28, 21, 12.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(73, 28, 21, 12.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    /* 胡须 */
+    ctx.strokeStyle = 'rgba(74,63,82,0.45)';
+    ctx.lineWidth = 2.2;
+    for (const side of [-1, 1]) {
+      for (let i = 0; i < 3; i++) {
+        const y0 = 6 + i * 15;
+        ctx.beginPath();
+        ctx.moveTo(side * 86, y0);
+        ctx.quadraticCurveTo(side * 116, y0 - 3 + i * 4, side * 136, y0 - 7 + i * 8);
+        ctx.stroke();
+      }
+    }
+
+    drawEye(-43, -12, p, gaze, deathB);
+    drawEye( 43, -12, p, gaze, deathB);
+
+    /* 鼻子 */
+    ctx.beginPath();
+    ctx.moveTo(-7.5, 22);
+    ctx.lineTo(7.5, 22);
+    ctx.quadraticCurveTo(0, 33, -7.5, 22);
+    ctx.closePath();
+    ctx.fillStyle = PINK;
+    ctx.fill();
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2.3;
+    ctx.stroke();
+
+    /* 嘴巴 */
+    const mOpen  = clamp(p.mouthOpen, 0, 1.3);
+    const mCurve = p.mouthCurve * (1 - clamp(mOpen, 0, 1));
+
+    ctx.beginPath();
+    ctx.moveTo(0, 32);
+    ctx.lineTo(0, 37);
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2.4;
+    ctx.stroke();
+
+    if (Math.abs(mCurve) > 0.5) {
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.8;
+      ctx.beginPath();
+      ctx.moveTo(0, 37);
+      ctx.quadraticCurveTo(-8.5, 37 + mCurve, -16, 34);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, 37);
+      ctx.quadraticCurveTo(8.5, 37 + mCurve, 16, 34);
+      ctx.stroke();
+    }
+
+    if (mOpen > 0.03) {
+      const rw = lerp(0, 11, clamp(mOpen, 0, 1));
+      const rh = lerp(0, 14, clamp(mOpen, 0, 1));
+      ctx.beginPath();
+      ctx.ellipse(0, 44, rw, rh, 0, 0, Math.PI * 2);
+      ctx.fillStyle = PINK;
+      ctx.fill();
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.8;
+      ctx.stroke();
+
+      if (mOpen > 0.55) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.ellipse(0, 44, rw, rh, 0, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.beginPath();
+        ctx.ellipse(0, 52, rw * 0.55, rh * 0.42, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#ff7f9c';
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    /* 呆毛 */
+    ctx.beginPath();
+    ctx.moveTo(-16, -94);
+    ctx.quadraticCurveTo(-4, -114, 10, -97);
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.restore();
+
+    /* 汗滴 */
+    const sa = scaredAmt * (1 - deathB);
+    if (sa > 0.05) {
+      const cx = W / 2 + shakeX;
+      const cy = BASE_Y + bob + shakeY + jumpY;
+      drawSweat(cx - 100, cy - 46 + Math.sin(t * 3.1) * 3, 7.5 + sa * 2.5, sa);
+      drawSweat(cx + 100, cy - 34 + Math.cos(t * 3.4) * 3, 6.8 + sa * 2.5, sa);
+      drawSweat(cx - 112, cy + 6 + Math.sin(t * 2.6) * 3, 5.8, sa * 0.85);
+      drawSweat(cx + 108, cy + 18 + Math.cos(t * 2.9) * 3, 5.2, sa * 0.85);
+      drawSweat(cx - 86, cy - 72 + Math.sin(t * 3.7) * 2.5, 5.4, sa * 0.7);
+      drawSweat(cx + 88, cy - 76 + Math.cos(t * 3.9) * 2.5, 5.0, sa * 0.7);
+    }
+  }
+
+  /* ==================== 主循环 ==================== */
+  const t0 = performance.now();
+  let lastTime = t0;
+
+  function loop(now) {
+    const dt = Math.min(0.05, (now - lastTime) / 1000);
+    lastTime = now;
+    const t = (now - t0) / 1000;
+
+    /* ---- 感谢计时 ---- */
+    if (thanksActive) {
+      thanksTimer += dt;
+      if (thanksTimer >= THANKS_DURATION) {
+        finishThanks();
+      }
+    }
+
+    /* ---- 注视方向 ---- */
+    if (isDead) {
+      gaze.x = lerp(gaze.x, 0, 0.06);
+      gaze.y = lerp(gaze.y, 0, 0.06);
+    } else if (thanksActive) {
+      gaze.x = lerp(gaze.x, 0, 0.12);
+      gaze.y = lerp(gaze.y, -4, 0.12);
+    } else {
+      let tgx = 0, tgy = 0;
+      if (mouseMoved) {
+        const rect = canvas.getBoundingClientRect();
+        const sx = W / rect.width;
+        const sy = H / rect.height;
+        const mx = (mouse.x - rect.left) * sx;
+        const my = (mouse.y - rect.top)  * sy;
+
+        const dx = mx - W / 2;
+        const dy = my - BASE_Y;
+        const d  = Math.hypot(dx, dy) || 1;
+        const maxOff = 5.6;
+        tgx = (dx / d) * maxOff;
+        tgy = (dy / d) * maxOff;
+      }
+      gaze.x = lerp(gaze.x, tgx, 0.14);
+      gaze.y = lerp(gaze.y, tgy, 0.14);
+    }
+
+    /* ---- 情绪值 ---- */
+    let moodTarget;
+    if (isDead) {
+      moodTarget = 0;
+    } else if (thanksActive) {
+      moodTarget = 1;
+    } else {
+      moodTarget = computeMoodTarget();
+    }
+    moodSmooth = lerp(moodSmooth, moodTarget, thanksActive ? 0.18 : 0.05);
+
+    /* ---- 死亡进度 ---- */
+    if (isDead) deathBlend = lerp(deathBlend, 1, 0.035);
+
+    /* ---- 表情参数 ---- */
+    let target;
+    if (moodSmooth >= 0) {
+      target = lerpParams(NEUTRAL, HAPPY, moodSmooth);
+    } else {
+      target = lerpParams(NEUTRAL, SCARED, -moodSmooth);
+    }
+
+    if (thanksActive) {
+      const k = clamp(thanksTimer / 0.4, 0, 1) * clamp((THANKS_DURATION - thanksTimer) / 0.5, 0, 1);
+      target.mouthCurve = lerp(target.mouthCurve, 20, k);
+      target.blush      = lerp(target.blush, 1.0, k);
+    }
+
+    if (deathBlend > 0.001) {
+      target = lerpParams(target, DEAD, deathBlend);
+    }
+
+    for (const k in target) {
+      cur[k] = lerp(cur[k], target[k], 0.10);
+    }
+
+    /* ---- 蹦跳动画 ---- */
+    let jumpY = 0, tilt = 0;
+    if (thanksActive) {
+      const p = thanksTimer;
+      jumpY = -Math.abs(Math.sin(p * 5.2)) * 17;
+      tilt  = Math.sin(p * 5.2) * 0.05;
+    }
+
+    /* ---- 粒子生成 ---- */
+    if (thanksActive && thanksTimer < THANKS_DURATION - 0.7) {
+      heartAcc += dt;
+      while (heartAcc > 0.1 && particles.length < 46) {
+        heartAcc -= 0.1;
+        spawnHeart();
+      }
+    }
+
+    /* ---- 粒子更新 ---- */
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.life += dt;
+      if (p.life >= p.maxLife) { particles.splice(i, 1); continue; }
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 14 * dt;
+      p.vx *= (1 - 0.6 * dt);
+      p.rot += p.rotV * dt;
+    }
+
+    /* ---- 绘制 ---- */
+    const scaredAmt = clamp(-moodSmooth, 0, 1);
+    drawRabbit(t, cur, deathBlend, scaredAmt, jumpY, tilt);
+
+    for (const p of particles) {
+      const k = p.life / p.maxLife;
+      const a = k < 0.15 ? k / 0.15 : (1 - smooth(k)) * 1.0;
+      drawHeartShape(p.x, p.y, p.size, p.rot, clamp(a, 0, 1), p.color);
+    }
+
+    if (thanksActive) drawBubble(thanksTimer);
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  /* ==================== 关闭页面逻辑 ==================== */
+  function tryCloseWindow() {
+    try { window.open('', '_self', ''); } catch (err) {}
+    try { window.close(); } catch (err) {}
+  }
+
+  let farewellTimer = null;
+
+  function finishThanks() {
+    if (thanksFinished) return;
+    thanksFinished = true;
+    thanksActive = false;
+    thanksTimer = 0;
+
+    // 解除防关闭拦截，让页面可以被关闭
+    allowClose = true;
+    window.removeEventListener('beforeunload', beforeUnloadHandler);
+
+    yesBtn.disabled = true;
+    yesBtn.style.opacity = '0.35';
+    yesBtn.style.pointerEvents = 'none';
+    noBtn.style.pointerEvents = 'none';
+
+    // 第一次尝试自动关闭
+    tryCloseWindow();
+
+    // 若浏览器拦截了自动关闭，则显示告别画面并倒计时
+    setTimeout(() => {
+      farewellEl.classList.add('show');
+      let count = 3;
+      farewellMsg.textContent = '小兔子感谢您的同意，页面将在 ' + count + ' 秒后关闭…';
+
+      farewellTimer = setInterval(() => {
+        count--;
+        if (count > 0) {
+          farewellMsg.textContent = '小兔子感谢您的同意，页面将在 ' + count + ' 秒后关闭…';
+        } else {
+          clearInterval(farewellTimer);
+          farewellMsg.textContent = '浏览器拦截了自动关闭，请手动关闭此页面 🙏';
+          tryCloseWindow();
+        }
+      }, 1000);
+    }, 450);
+  }
+
+  closeNowBtn.addEventListener('click', () => {
+    if (farewellTimer) { clearInterval(farewellTimer); farewellTimer = null; }
+    tryCloseWindow();
+    setTimeout(() => {
+      farewellMsg.textContent = '浏览器不允许脚本关闭，请点击标签页的 × 手动关闭 🙏';
+    }, 350);
+  });
+
+  /* ==================== 「同意」点击 ==================== */
+  yesBtn.addEventListener('click', () => {
+    if (isDead || thanksActive || thanksFinished || allowClose) return;
+
+    thanksActive = true;
+    thanksTimer  = 0;
+    heartAcc     = 0;
+
+    for (let i = 0; i < 7; i++) spawnHeart();
+  });
+
+  /* ==================== 「不同意」点击 ==================== */
+  function applyNoSize() {
+    const w = 118 * noScale;
+    const h = 52 * noScale;
+    noBtn.style.width = w + 'px';
+    noBtn.style.height = h + 'px';
+    noBtn.style.minWidth = '0';
+    noBtn.style.padding = '0';
+    noBtn.style.fontSize = Math.max(9, 18 * noScale) + 'px';
+    noBtn.style.borderRadius = (26 * noScale) + 'px';
+    noBtn.style.borderWidth = Math.max(1.1, 2.5 * noScale) + 'px';
+    noBtn.style.boxShadow = '0 ' + Math.max(1, 4 * noScale) + 'px 0 #4a3f52';
+  }
+
+  function triggerDeath() {
+    isDead = true;
+    thanksActive = false;
+
+    noBtn.style.transition = 'opacity .55s ease, transform .55s ease';
+    noBtn.style.transform = 'scale(.15)';
+    noBtn.style.opacity = '0';
+    noBtn.style.pointerEvents = 'none';
+
+    yesBtn.style.transition = 'opacity .55s ease';
+    yesBtn.style.opacity = '0.3';
+    yesBtn.style.pointerEvents = 'none';
+
+    setTimeout(() => ripEl.classList.add('show'), 120);
+  }
+
+  noBtn.addEventListener('click', () => {
+    if (isDead || busy || thanksActive || thanksFinished || allowClose) return;
+
+    noClickCount++;
+
+    if (noClickCount >= 10) {
+      triggerDeath();
+      return;
+    }
+
+    busy = true;
+    noScale = Math.max(0.32, 1 - noClickCount * 0.075);
+
+    const r = noBtn.getBoundingClientRect();
+
+    noBtn.style.position = 'fixed';
+    noBtn.style.left = r.left + 'px';
+    noBtn.style.top  = r.top  + 'px';
+    noBtn.style.margin = '0';
+    noBtn.style.transition = 'opacity .17s ease, transform .17s ease, width .17s ease, height .17s ease, font-size .17s ease, border-radius .17s ease';
+    noBtn.style.opacity = '0';
+    noBtn.style.transform = 'scale(.5)';
+
+    setTimeout(() => {
+      applyNoSize();
+
+      const nw = 118 * noScale;
+      const nh = 52 * noScale;
+      const pad = 16;
+      const maxX = Math.max(pad, window.innerWidth  - nw - pad);
+      const maxY = Math.max(pad, window.innerHeight - nh - pad);
+      const x = pad + Math.random() * (maxX - pad);
+      const y = pad + Math.random() * (maxY - pad);
+
+      noBtn.style.left = x + 'px';
+      noBtn.style.top  = y + 'px';
+      noBtn.style.opacity = '1';
+      noBtn.style.transform = 'scale(1)';
+
+      busy = false;
+    }, 175);
+  });
+
+  /* ==================== 禁止关掉页面（可解除） ==================== */
+  function beforeUnloadHandler(e) {
+    if (allowClose) return;
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+  }
+  window.addEventListener('beforeunload', beforeUnloadHandler);
+
+  document.addEventListener('keydown', e => {
+    if (allowClose) return;
+    if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === 'w') {
+      e.preventDefault();
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
